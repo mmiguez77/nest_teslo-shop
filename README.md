@@ -4,7 +4,13 @@
 
 #  TESLO API (POSTGRES SQL / TypeORM)
 
-1. Levanta DDBB
+1. Clonar repositorio
+2. ```npm install```
+3. Renombar el archivo ```.env.template``` a ```.env```
+4. Completar variables de entorno
+5. Levantar DDBB
 ```
 docker-compose up -d
 ```
+
+6. Iniciar server: ```npm run start:dev```
