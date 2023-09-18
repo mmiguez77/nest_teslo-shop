@@ -12,6 +12,7 @@ import { Repository } from 'typeorm';
 import { Product } from './entities/product.entity';
 import { PaginationDto } from '../common/dto/pagination.dto';
 import { validate as isUUID } from 'uuid';
+import { ProductImage } from './entities/product-image.entity';
 
 @Injectable()
 export class ProductsService {
@@ -20,11 +21,20 @@ export class ProductsService {
   constructor(
     @InjectRepository(Product)
     private readonly productsRepository: Repository<Product>,
+    @InjectRepository(ProductImage)
+    private readonly productsImageRepository: Repository<ProductImage>,
   ) {}
 
   async create(createProductDto: CreateProductDto) {
     try {
-      const product = this.productsRepository.create(createProductDto);
+      const { images = [], ...productDetail } = createProductDto;
+
+      const product = this.productsRepository.create({
+        ...productDetail,
+        images: images.map((image) =>
+          this.productsImageRepository.create({ url: image }),
+        ),
+      });
       await this.productsRepository.save(product);
       return product;
     } catch (error) {
@@ -37,7 +47,9 @@ export class ProductsService {
     return await this.productsRepository.find({
       take: limit,
       skip: offset,
-      //TODO: relaciones
+      relations: {
+        images: true,
+      },
     });
   }
 
@@ -53,6 +65,7 @@ export class ProductsService {
           title: term.toUpperCase(),
           slug: term.toLowerCase(),
         })
+        .leftJoinAndSelect('product.images', 'image')
         .getOne();
     }
 
@@ -66,6 +79,7 @@ export class ProductsService {
     const product = await this.productsRepository.preload({
       id,
       ...updateProductDto,
+      images: [],
     });
 
     if (!product) {
